@@ -1,6 +1,6 @@
 # lplex-typescript
 
-TypeScript client library and CLI for lplex, a CAN bus HTTP bridge for NMEA 2000. Monorepo with two packages via npm workspaces.
+TypeScript client library for lplex, a CAN bus HTTP bridge for NMEA 2000. Monorepo with two packages via npm workspaces.
 
 ## Build & Test
 
@@ -13,7 +13,7 @@ npm run lint:fix               # biome auto-fix
 npm run typecheck              # tsc --noEmit on both packages
 ```
 
-Run the CLI in dev mode:
+Run the CLI example in dev mode:
 
 ```bash
 cd packages/lplex-cli
@@ -22,10 +22,10 @@ npx tsx src/main.ts --server http://inuc1.local:8089
 
 ## Package Structure
 
-| Package | Path | Owns |
-|---|---|---|
-| `@sixfathoms/lplex` | `packages/lplex/` | Client library. Zero runtime deps. ESM + CJS + .d.ts via tsup. |
-| `@sixfathoms/lplex-cli` | `packages/lplex-cli/` | CLI tool. Port of Go's `lplexdump`. Single ESM bundle with shebang. |
+| Package | Path | Published | Owns |
+|---|---|---|---|
+| `@sixfathoms/lplex` | `packages/lplex/` | npm | Client library. Zero runtime deps. ESM + CJS + .d.ts via tsup. |
+| `@sixfathoms/lplex-cli` | `packages/lplex-cli/` | private | CLI example. Port of Go's `lplexdump`. Not published to npm. |
 
 ### packages/lplex/ File Map
 
@@ -37,6 +37,7 @@ npx tsx src/main.ts --server http://inuc1.local:8089
 | `src/client.ts` | `Client` class: `devices()`, `subscribe()`, `send()`, `createSession()`. Injectable `fetch`. |
 | `src/session.ts` | `Session` class: `subscribe()`, `ack()`, `info`, `lastAckedSeq` |
 | `src/index.ts` | Barrel exports |
+| `README.md` | npm package page README |
 | `test/sse.test.ts` | SSE parser unit tests (8 tests) |
 | `test/client.test.ts` | Client + Session tests with injected fetch (11 tests) |
 
@@ -74,19 +75,20 @@ All types use `snake_case` field names matching the server's JSON output exactly
 
 ## Release
 
-Tags trigger the release workflow which publishes both packages to npm under the `@sixfathoms` org and creates a GitHub Release.
+Tags trigger the release workflow which publishes `@sixfathoms/lplex` to npm and creates a GitHub Release.
 
 ```bash
-git tag -a v0.1.0 -m "v0.1.0" && git push origin v0.1.0
+git tag -a v0.2.0 -m "v0.2.0" && git push origin v0.2.0
 ```
 
-**Secrets**: `NPM_TOKEN` (npm automation token with publish access to `@sixfathoms` scope)
+Publishing uses OIDC trusted publishing (no secrets needed). The trusted publisher is configured on npmjs.com to trust this repo's `release.yml` workflow.
 
-Both packages are versioned together from the tag. The workflow stamps the version from the tag into all package.json files before publishing.
+The workflow stamps the version from the tag into package.json before publishing. The `package.json` `repository.url` must match the GitHub repo for provenance verification.
 
 ## Conventions
 
-- Node 18+ (uses global `fetch`, `ReadableStream`, `TextDecoder`)
+- Node 24+ in CI (npm >=11.5.1 required for OIDC trusted publishing)
+- Library works in Node 18+ and modern browsers (uses global `fetch`, `ReadableStream`, `TextDecoder`)
 - TypeScript strict mode, ES2022 target
 - Biome for lint and format (must pass before pushing, CI enforces)
 - No mocks in tests, real `ReadableStream` instances with injected fetch
@@ -96,5 +98,5 @@ Both packages are versioned together from the tag. The workflow stamps the versi
 ## Dependencies
 
 - **Library**: zero runtime deps
-- **CLI**: `bonjour-service` (mDNS), `@sixfathoms/lplex` (workspace)
+- **CLI**: `bonjour-service` (mDNS), `@sixfathoms/lplex` (workspace dependency)
 - **Dev**: `tsup` (build), `vitest` (test), `typescript`, `@biomejs/biome` (lint)
