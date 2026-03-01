@@ -1,6 +1,7 @@
 {
   "name": "@sixfathoms/lplex-cli",
-  "version": "0.1.0",
+  "private": true,
+  "version": "0.0.0",
   "description": "CLI client for lplex CAN bus HTTP bridge (like lplexdump, but in TypeScript)",
   "type": "module",
   "bin": {
