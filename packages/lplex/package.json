@@ -1,6 +1,6 @@
 {
   "name": "@sixfathoms/lplex",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "TypeScript client for lplex CAN bus HTTP bridge",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -18,7 +18,7 @@
       }
     }
   },
-  "files": ["dist"],
+  "files": ["dist", "README.md"],
   "scripts": {
     "build": "tsup",
     "test": "vitest run",
