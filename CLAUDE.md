@@ -72,6 +72,18 @@ All types use `snake_case` field names matching the server's JSON output exactly
 | `/send` | POST | Transmit CAN frame. JSON body: `pgn`, `src`, `dst`, `prio`, `data`. Returns 202. |
 | `/devices` | GET | Device snapshot. Returns JSON array. |
 
+## Release
+
+Tags trigger the release workflow which publishes both packages to npm under the `@sixfathoms` org and creates a GitHub Release.
+
+```bash
+git tag -a v0.1.0 -m "v0.1.0" && git push origin v0.1.0
+```
+
+**Secrets**: `NPM_TOKEN` (npm automation token with publish access to `@sixfathoms` scope)
+
+Both packages are versioned together from the tag. The workflow stamps the version from the tag into all package.json files before publishing.
+
 ## Conventions
 
 - Node 18+ (uses global `fetch`, `ReadableStream`, `TextDecoder`)
