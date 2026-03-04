@@ -69,3 +69,50 @@ export interface SendParams {
   prio: number;
   data: string;
 }
+
+// --- Cloud types ---
+
+/** Summary of a cloud instance, returned by GET /instances. */
+export interface InstanceSummary {
+  id: string;
+  connected: boolean;
+  cursor: number;
+  boat_head_seq: number;
+  holes: number;
+  lag_seqs: number;
+  last_seen: string;
+}
+
+/** A sequence range representing a gap in the replication stream. */
+export interface SeqRange {
+  start: number;
+  end: number;
+}
+
+/** Detailed replication status for one instance. */
+export interface InstanceStatus {
+  id: string;
+  connected: boolean;
+  cursor: number;
+  boat_head_seq: number;
+  boat_journal_bytes: number;
+  holes: SeqRange[];
+  lag_seqs: number;
+  last_seen: string;
+}
+
+/** Event types emitted by the replication pipeline. */
+export type ReplicationEventType =
+  | "live_start"
+  | "live_stop"
+  | "backfill_start"
+  | "backfill_stop"
+  | "block_received"
+  | "checkpoint";
+
+/** A single diagnostic event from the replication pipeline. */
+export interface ReplicationEvent {
+  time: string;
+  type: ReplicationEventType;
+  detail?: Record<string, unknown>;
+}
