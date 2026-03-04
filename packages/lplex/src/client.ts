@@ -3,6 +3,7 @@ import { Session } from "./session.js";
 import { parseSSE } from "./sse.js";
 import type {
   Device,
+  DeviceValues,
   Event,
   Filter,
   SendParams,
@@ -36,6 +37,19 @@ export class Client {
     }
 
     return resp.json() as Promise<Device[]>;
+  }
+
+  /** Fetch the last-seen value for each (device, PGN) pair. */
+  async values(signal?: AbortSignal): Promise<DeviceValues[]> {
+    const url = `${this.#baseURL}/values`;
+    const resp = await this.#fetch(url, { signal });
+
+    if (!resp.ok) {
+      const body = await resp.text();
+      throw new HttpError("GET", url, resp.status, body);
+    }
+
+    return resp.json() as Promise<DeviceValues[]>;
   }
 
   /**

@@ -58,6 +58,54 @@ function errorResponse(status: number, body: string): Response {
   return new Response(body, { status });
 }
 
+describe("Client.values", () => {
+  it("fetches and returns last-known values", async () => {
+    const values = [
+      {
+        name: "0x00deadbeef123456",
+        src: 1,
+        manufacturer: "Garmin",
+        model_id: "GPS 19x",
+        values: [
+          { pgn: 129025, ts: "2026-03-04T10:00:00Z", data: "aabbccdd", seq: 100 },
+        ],
+      },
+    ];
+    const mockFetch = async (url: string | URL | Request) => {
+      expect(url).toBe("http://localhost:8089/values");
+      return jsonResponse(values);
+    };
+
+    const client = new Client("http://localhost:8089", {
+      fetch: mockFetch as typeof fetch,
+    });
+    const result = await client.values();
+    expect(result).toHaveLength(1);
+    expect(result[0].src).toBe(1);
+    expect(result[0].manufacturer).toBe("Garmin");
+    expect(result[0].values).toHaveLength(1);
+    expect(result[0].values[0].pgn).toBe(129025);
+    expect(result[0].values[0].data).toBe("aabbccdd");
+  });
+
+  it("returns empty array when no values", async () => {
+    const mockFetch = async () => jsonResponse([]);
+    const client = new Client("http://localhost:8089", {
+      fetch: mockFetch as typeof fetch,
+    });
+    const result = await client.values();
+    expect(result).toEqual([]);
+  });
+
+  it("throws HttpError on non-200", async () => {
+    const mockFetch = async () => errorResponse(500, "internal error");
+    const client = new Client("http://localhost:8089", {
+      fetch: mockFetch as typeof fetch,
+    });
+    await expect(client.values()).rejects.toThrow(HttpError);
+  });
+});
+
 describe("Client.devices", () => {
   it("fetches and returns the device list", async () => {
     const devices = [{ ...sampleDevice }];
