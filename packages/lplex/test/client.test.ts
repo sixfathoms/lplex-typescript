@@ -67,7 +67,12 @@ describe("Client.values", () => {
         manufacturer: "Garmin",
         model_id: "GPS 19x",
         values: [
-          { pgn: 129025, ts: "2026-03-04T10:00:00Z", data: "aabbccdd", seq: 100 },
+          {
+            pgn: 129025,
+            ts: "2026-03-04T10:00:00Z",
+            data: "aabbccdd",
+            seq: 100,
+          },
         ],
       },
     ];
