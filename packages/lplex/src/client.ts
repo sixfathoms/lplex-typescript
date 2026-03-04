@@ -40,8 +40,10 @@ export class Client {
   }
 
   /** Fetch the last-seen value for each (device, PGN) pair. */
-  async values(signal?: AbortSignal): Promise<DeviceValues[]> {
-    const url = `${this.#baseURL}/values`;
+  async values(filter?: Filter, signal?: AbortSignal): Promise<DeviceValues[]> {
+    let url = `${this.#baseURL}/values`;
+    const qs = filterToQueryString(filter);
+    if (qs) url += `?${qs}`;
     const resp = await this.#fetch(url, { signal });
 
     if (!resp.ok) {

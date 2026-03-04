@@ -72,7 +72,7 @@ All types use `snake_case` field names matching the server's JSON output exactly
 | `/clients/{id}/ack` | PUT | ACK sequence number. JSON body: `{ "seq": N }`. Returns 204. |
 | `/send` | POST | Transmit CAN frame. JSON body: `pgn`, `src`, `dst`, `prio`, `data`. Returns 202. |
 | `/devices` | GET | Device snapshot. Returns JSON array. |
-| `/values` | GET | Last-seen value per (device, PGN). Returns JSON array grouped by device. |
+| `/values` | GET | Last-seen value per (device, PGN). Query params: `pgn`, `manufacturer`, `instance`, `name` (repeatable). Returns JSON array grouped by device. |
 
 ## Release
 
