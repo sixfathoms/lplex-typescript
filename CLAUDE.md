@@ -7,7 +7,7 @@ TypeScript client library for lplex, a CAN bus HTTP bridge for NMEA 2000. Monore
 ```bash
 npm install                    # install all workspace deps
 npm run build                  # build both packages (tsup)
-npm run test                   # vitest (library only, 19 tests)
+npm run test                   # vitest (library only, 30 tests)
 npm run lint                   # biome check
 npm run lint:fix               # biome auto-fix
 npm run typecheck              # tsc --noEmit on both packages
@@ -31,15 +31,15 @@ npx tsx src/main.ts --server http://inuc1.local:8089
 
 | File | Owns |
 |---|---|
-| `src/types.ts` | `Frame`, `Device`, `Event` (discriminated union), `Filter`, `SessionConfig`, `SessionInfo`, `SendParams` |
+| `src/types.ts` | `Frame`, `Device`, `Event` (discriminated union), `Filter`, `PGNValue`, `DeviceValues`, `SessionConfig`, `SessionInfo`, `SendParams` |
 | `src/errors.ts` | `LplexError`, `HttpError` |
 | `src/sse.ts` | `parseSSE` async generator: reads `data:` lines from `ReadableStream<Uint8Array>`, yields `Event` objects |
-| `src/client.ts` | `Client` class: `devices()`, `subscribe()`, `send()`, `createSession()`. Injectable `fetch`. |
+| `src/client.ts` | `Client` class: `devices()`, `values()`, `subscribe()`, `send()`, `createSession()`. Injectable `fetch`. |
 | `src/session.ts` | `Session` class: `subscribe()`, `ack()`, `info`, `lastAckedSeq` |
 | `src/index.ts` | Barrel exports |
 | `README.md` | npm package page README |
 | `test/sse.test.ts` | SSE parser unit tests (8 tests) |
-| `test/client.test.ts` | Client + Session tests with injected fetch (11 tests) |
+| `test/client.test.ts` | Client + Session tests with injected fetch (14 tests) |
 
 ### packages/lplex-cli/ File Map
 
@@ -72,6 +72,7 @@ All types use `snake_case` field names matching the server's JSON output exactly
 | `/clients/{id}/ack` | PUT | ACK sequence number. JSON body: `{ "seq": N }`. Returns 204. |
 | `/send` | POST | Transmit CAN frame. JSON body: `pgn`, `src`, `dst`, `prio`, `data`. Returns 202. |
 | `/devices` | GET | Device snapshot. Returns JSON array. |
+| `/values` | GET | Last-seen value per (device, PGN). Returns JSON array grouped by device. |
 
 ## Release
 

@@ -70,6 +70,25 @@ export interface SendParams {
   data: string;
 }
 
+// --- Values types ---
+
+/** A single PGN's last-known value for a device. */
+export interface PGNValue {
+  pgn: number;
+  ts: string;
+  data: string;
+  seq: number;
+}
+
+/** Last-known values grouped by device. */
+export interface DeviceValues {
+  name: string;
+  src: number;
+  manufacturer?: string;
+  model_id?: string;
+  values: PGNValue[];
+}
+
 // --- Cloud types ---
 
 /** Summary of a cloud instance, returned by GET /instances. */

@@ -9,6 +9,8 @@ export type {
   Device,
   Event,
   Filter,
+  PGNValue,
+  DeviceValues,
   SessionConfig,
   SessionInfo,
   SendParams,

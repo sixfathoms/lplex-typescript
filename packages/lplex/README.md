@@ -58,6 +58,20 @@ for (const d of devices) {
 }
 ```
 
+### `client.values(signal?): Promise<DeviceValues[]>`
+
+Returns the last-seen value for each (device, PGN) pair, grouped by device. Useful for getting a snapshot of current bus state without subscribing to SSE.
+
+```typescript
+const snapshot = await client.values();
+for (const device of snapshot) {
+  console.log(`${device.manufacturer} (src=${device.src}):`);
+  for (const v of device.values) {
+    console.log(`  PGN ${v.pgn}: ${v.data} @ ${v.ts}`);
+  }
+}
+```
+
 ### `client.subscribe(filter?, signal?): Promise<AsyncIterable<Event>>`
 
 Opens an ephemeral SSE stream. No session state, no replay. Frames flow until you stop reading or abort.
@@ -285,6 +299,21 @@ interface SendParams {
   prio: number;
   data: string;            // hex-encoded
 }
+
+interface PGNValue {
+  pgn: number;
+  ts: string;              // RFC 3339 timestamp
+  data: string;            // hex-encoded payload
+  seq: number;             // sequence number
+}
+
+interface DeviceValues {
+  name: string;            // hex CAN NAME (empty if unknown)
+  src: number;             // source address
+  manufacturer?: string;
+  model_id?: string;
+  values: PGNValue[];      // sorted by PGN
+}
 ```
 
 ## Server Endpoints
@@ -297,6 +326,7 @@ interface SendParams {
 | `/clients/{id}/ack` | PUT | ACK sequence number. JSON body: `{ "seq": N }`. Returns 204. |
 | `/send` | POST | Transmit CAN frame. JSON body: `pgn`, `src`, `dst`, `prio`, `data`. Returns 202. |
 | `/devices` | GET | Device snapshot. Returns JSON array. |
+| `/values` | GET | Last-seen value per (device, PGN). Returns JSON array grouped by device. |
 
 ## License
 
