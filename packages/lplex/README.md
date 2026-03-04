@@ -58,7 +58,7 @@ for (const d of devices) {
 }
 ```
 
-### `client.values(signal?): Promise<DeviceValues[]>`
+### `client.values(filter?, signal?): Promise<DeviceValues[]>`
 
 Returns the last-seen value for each (device, PGN) pair, grouped by device. Useful for getting a snapshot of current bus state without subscribing to SSE.
 
@@ -70,6 +70,15 @@ for (const device of snapshot) {
     console.log(`  PGN ${v.pgn}: ${v.data} @ ${v.ts}`);
   }
 }
+```
+
+Pass a `Filter` to narrow results by PGN and/or device criteria:
+
+```typescript
+const positions = await client.values({
+  pgn: [129025],
+  manufacturer: ["Garmin"],
+});
 ```
 
 ### `client.subscribe(filter?, signal?): Promise<AsyncIterable<Event>>`
@@ -326,7 +335,7 @@ interface DeviceValues {
 | `/clients/{id}/ack` | PUT | ACK sequence number. JSON body: `{ "seq": N }`. Returns 204. |
 | `/send` | POST | Transmit CAN frame. JSON body: `pgn`, `src`, `dst`, `prio`, `data`. Returns 202. |
 | `/devices` | GET | Device snapshot. Returns JSON array. |
-| `/values` | GET | Last-seen value per (device, PGN). Returns JSON array grouped by device. |
+| `/values` | GET | Last-seen value per (device, PGN). Query params: `pgn`, `manufacturer`, `instance`, `name` (repeatable). Returns JSON array grouped by device. |
 
 ## License
 

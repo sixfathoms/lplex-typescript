@@ -102,6 +102,51 @@ describe("Client.values", () => {
     expect(result).toEqual([]);
   });
 
+  it("encodes filter as query params", async () => {
+    let capturedURL = "";
+    const mockFetch = async (url: string | URL | Request) => {
+      capturedURL = String(url);
+      return jsonResponse([]);
+    };
+
+    const client = new Client("http://localhost:8089", {
+      fetch: mockFetch as typeof fetch,
+    });
+    await client.values({ pgn: [129025, 129026], manufacturer: ["Garmin"] });
+
+    const parsed = new URL(capturedURL);
+    expect(parsed.searchParams.getAll("pgn")).toEqual(["129025", "129026"]);
+    expect(parsed.searchParams.getAll("manufacturer")).toEqual(["Garmin"]);
+  });
+
+  it("omits query string when filter is empty", async () => {
+    let capturedURL = "";
+    const mockFetch = async (url: string | URL | Request) => {
+      capturedURL = String(url);
+      return jsonResponse([]);
+    };
+
+    const client = new Client("http://localhost:8089", {
+      fetch: mockFetch as typeof fetch,
+    });
+    await client.values({});
+    expect(capturedURL).toBe("http://localhost:8089/values");
+  });
+
+  it("omits query string when no filter", async () => {
+    let capturedURL = "";
+    const mockFetch = async (url: string | URL | Request) => {
+      capturedURL = String(url);
+      return jsonResponse([]);
+    };
+
+    const client = new Client("http://localhost:8089", {
+      fetch: mockFetch as typeof fetch,
+    });
+    await client.values();
+    expect(capturedURL).toBe("http://localhost:8089/values");
+  });
+
   it("throws HttpError on non-200", async () => {
     const mockFetch = async () => errorResponse(500, "internal error");
     const client = new Client("http://localhost:8089", {
