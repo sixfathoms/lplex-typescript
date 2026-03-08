@@ -41,9 +41,11 @@ export type Event =
  */
 export interface Filter {
   pgn?: number[];
+  exclude_pgn?: number[];
   manufacturer?: string[];
   instance?: number[];
   name?: string[];
+  exclude_name?: string[];
 }
 
 /** Configuration for creating a buffered session. */
@@ -87,6 +89,48 @@ export interface DeviceValues {
   manufacturer?: string;
   model_id?: string;
   values: PGNValue[];
+}
+
+/** A single PGN's decoded value for a device. */
+export interface DecodedPGNValue {
+  pgn: number;
+  ts: string;
+  data: string;
+  seq: number;
+  decoded: Record<string, unknown>;
+}
+
+/** Decoded values grouped by device. */
+export interface DecodedDeviceValues {
+  name: string;
+  src: number;
+  manufacturer?: string;
+  model_id?: string;
+  values: DecodedPGNValue[];
+}
+
+/** Parameters for an ISO Request query (POST /query). */
+export interface QueryParams {
+  pgn: number;
+  dst: number;
+  timeout?: string;
+}
+
+/** Health check response from GET /healthz. */
+export interface HealthStatus {
+  status: string;
+}
+
+/** Boat-side replication status from GET /replication/status. */
+export interface ReplicationStatus {
+  connected: boolean;
+  instance_id: string;
+  local_head_seq: number;
+  cloud_cursor: number;
+  holes: SeqRange[];
+  live_lag: number;
+  backfill_remaining_seqs: number;
+  last_ack: string;
 }
 
 // --- Cloud types ---
