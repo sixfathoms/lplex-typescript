@@ -31,15 +31,17 @@ npx tsx src/main.ts --server http://inuc1.local:8089
 
 | File | Owns |
 |---|---|
-| `src/types.ts` | `Frame`, `Device`, `Event` (discriminated union), `Filter`, `PGNValue`, `DeviceValues`, `SessionConfig`, `SessionInfo`, `SendParams` |
+| `src/types.ts` | `Frame`, `Device`, `DeviceRemoved`, `Event` (discriminated union), `Filter`, `SubscribeOptions`, `PGNValue`, `DeviceValues`, `DecodedPGNValue`, `DecodedDeviceValues`, `QueryParams`, `HistoryParams`, `BrokerHealth`, `ReplicationHealth`, `HealthStatus`, `ReplicationStatus`, `SessionConfig`, `SessionInfo`, `SendParams`, `InstanceSummary`, `InstanceStatus`, `SeqRange`, `ReplicationEvent`, `ReplicationEventType` |
 | `src/errors.ts` | `LplexError`, `HttpError` |
-| `src/sse.ts` | `parseSSE` async generator: reads `data:` lines from `ReadableStream<Uint8Array>`, yields `Event` objects |
-| `src/client.ts` | `Client` class: `devices()`, `values()`, `subscribe()`, `send()`, `createSession()`. Injectable `fetch`. |
+| `src/sse.ts` | `parseSSE` async generator: reads `data:` lines from `ReadableStream<Uint8Array>`, yields `Event` objects (frame, device, device_removed) |
+| `src/client.ts` | `Client` class: `devices()`, `values()`, `decodedValues()`, `subscribe()`, `send()`, `query()`, `history()`, `health()`, `liveness()`, `readiness()`, `replicationStatus()`, `createSession()`. Injectable `fetch`. |
+| `src/cloud.ts` | `CloudClient` class: `client()`, `instances()`, `status()`, `replicationEvents()`, `health()`, `liveness()`, `readiness()`. |
 | `src/session.ts` | `Session` class: `subscribe()`, `ack()`, `info`, `lastAckedSeq` |
 | `src/index.ts` | Barrel exports |
 | `README.md` | npm package page README |
-| `test/sse.test.ts` | SSE parser unit tests (8 tests) |
-| `test/client.test.ts` | Client + Session tests with injected fetch (14 tests) |
+| `test/sse.test.ts` | SSE parser unit tests (9 tests) |
+| `test/client.test.ts` | Client + Session tests with injected fetch (40 tests) |
+| `test/cloud.test.ts` | CloudClient tests with injected fetch (12 tests) |
 
 ### packages/lplex-cli/ File Map
 

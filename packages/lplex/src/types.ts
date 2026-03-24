@@ -2,15 +2,18 @@
 export interface Frame {
   seq: number;
   ts: string;
+  bus?: string;
   prio: number;
   pgn: number;
   src: number;
   dst: number;
   data: string;
+  decoded?: Record<string, unknown>;
 }
 
 /** An NMEA 2000 device discovered on the bus. */
 export interface Device {
+  bus?: string;
   src: number;
   name: string;
   manufacturer: string;
@@ -30,10 +33,18 @@ export interface Device {
   byte_count: number;
 }
 
+/** A device-removed notification from the bus. */
+export interface DeviceRemoved {
+  type: "device_removed";
+  bus?: string;
+  src: number;
+}
+
 /** Discriminated union for SSE events. */
 export type Event =
   | { type: "frame"; frame: Frame }
-  | { type: "device"; device: Device };
+  | { type: "device"; device: Device }
+  | { type: "device_removed"; deviceRemoved: DeviceRemoved };
 
 /**
  * Filter for CAN frames.
@@ -46,6 +57,15 @@ export interface Filter {
   instance?: number[];
   name?: string[];
   exclude_name?: string[];
+  bus?: string[];
+}
+
+/** Options for ephemeral SSE subscription. */
+export interface SubscribeOptions {
+  filter?: Filter;
+  /** When true, frames include decoded field values. */
+  decode?: boolean;
+  signal?: AbortSignal;
 }
 
 /** Configuration for creating a buffered session. */
@@ -70,6 +90,7 @@ export interface SendParams {
   dst: number;
   prio: number;
   data: string;
+  bus?: string;
 }
 
 // --- Values types ---
@@ -112,13 +133,62 @@ export interface DecodedDeviceValues {
 /** Parameters for an ISO Request query (POST /query). */
 export interface QueryParams {
   pgn: number;
-  dst: number;
+  /** Destination address. Defaults to 0xFF (broadcast) on the server. */
+  dst?: number;
   timeout?: string;
+  bus?: string;
 }
 
-/** Health check response from GET /healthz. */
+/** Parameters for historical data query (GET /history). */
+export interface HistoryParams {
+  /** Start timestamp (RFC 3339). */
+  from: string;
+  /** End timestamp (RFC 3339). Defaults to now. */
+  to?: string;
+  /** Filter by PGN(s). */
+  pgn?: number[];
+  /** Filter by source address(es). */
+  src?: number[];
+  /** Max frames to return. Defaults to 10000. */
+  limit?: number;
+  /** Downsample interval (e.g. "1s", "PT1M"). */
+  interval?: string;
+  /** Include decoded values in response. */
+  decode?: boolean;
+}
+
+// --- Health types ---
+
+/** Broker health details. */
+export interface BrokerHealth {
+  status: string;
+  frames_total: number;
+  head_seq: number;
+  last_frame_time: string;
+  device_count: number;
+  ring_entries: number;
+  ring_capacity: number;
+}
+
+/** Replication component health (within health response). */
+export interface ReplicationHealth {
+  status: string;
+  connected: boolean;
+  live_lag: number;
+  backfill_remaining_seqs: number;
+  last_ack: string;
+}
+
+/** Health check response from GET /healthz or /readyz. */
 export interface HealthStatus {
   status: string;
+  broker?: BrokerHealth;
+  replication?: ReplicationHealth;
+  components?: Record<string, unknown>;
+  /** Cloud-only: total known instances. */
+  instances_total?: number;
+  /** Cloud-only: currently connected instances. */
+  instances_connected?: number;
 }
 
 /** Boat-side replication status from GET /replication/status. */
@@ -131,6 +201,10 @@ export interface ReplicationStatus {
   live_lag: number;
   backfill_remaining_seqs: number;
   last_ack: string;
+  live_frames_sent: number;
+  backfill_blocks_sent: number;
+  backfill_bytes_sent: number;
+  reconnects: number;
 }
 
 // --- Cloud types ---

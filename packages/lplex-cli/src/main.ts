@@ -197,6 +197,8 @@ async function runEphemeral(client: Client, devices: DeviceMap): Promise<void> {
     if (aborted) break;
     if (event.type === "device") {
       handleDevice(event.device, devices);
+    } else if (event.type === "device_removed") {
+      devices.delete(event.deviceRemoved.src);
     } else {
       writeFrame(event, devices);
     }
@@ -242,6 +244,8 @@ async function runBuffered(client: Client, devices: DeviceMap): Promise<void> {
       if (aborted) break;
       if (event.type === "device") {
         handleDevice(event.device, devices);
+      } else if (event.type === "device_removed") {
+        devices.delete(event.deviceRemoved.src);
       } else {
         lastSeq = event.frame.seq;
         writeFrame(event, devices);

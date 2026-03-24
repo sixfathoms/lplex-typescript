@@ -566,6 +566,198 @@ describe("Client.replicationStatus", () => {
   });
 });
 
+describe("Client.subscribe with SubscribeOptions", () => {
+  it("passes decode=true as query param", async () => {
+    let capturedURL = "";
+    const mockFetch = async (url: string | URL | Request) => {
+      capturedURL = String(url);
+      return sseResponse("");
+    };
+
+    const client = new Client("http://localhost:8089", {
+      fetch: mockFetch as typeof fetch,
+    });
+    await client.subscribe({ decode: true });
+    const parsed = new URL(capturedURL);
+    expect(parsed.searchParams.get("decode")).toBe("true");
+  });
+
+  it("passes filter and decode together", async () => {
+    let capturedURL = "";
+    const mockFetch = async (url: string | URL | Request) => {
+      capturedURL = String(url);
+      return sseResponse("");
+    };
+
+    const client = new Client("http://localhost:8089", {
+      fetch: mockFetch as typeof fetch,
+    });
+    await client.subscribe({
+      filter: { pgn: [129025] },
+      decode: true,
+    });
+    const parsed = new URL(capturedURL);
+    expect(parsed.searchParams.getAll("pgn")).toEqual(["129025"]);
+    expect(parsed.searchParams.get("decode")).toBe("true");
+  });
+});
+
+describe("Client.history", () => {
+  it("fetches historical frames", async () => {
+    const frames = [
+      {
+        seq: 1,
+        ts: "2026-03-01T00:00:00Z",
+        prio: 6,
+        pgn: 129025,
+        src: 1,
+        dst: 255,
+        data: "aabb",
+      },
+    ];
+    let capturedURL = "";
+    const mockFetch = async (url: string | URL | Request) => {
+      capturedURL = String(url);
+      return jsonResponse(frames);
+    };
+
+    const client = new Client("http://localhost:8089", {
+      fetch: mockFetch as typeof fetch,
+    });
+    const result = await client.history({ from: "2026-03-01T00:00:00Z" });
+    expect(result).toHaveLength(1);
+    expect(result[0].pgn).toBe(129025);
+    const parsed = new URL(capturedURL);
+    expect(parsed.pathname).toBe("/history");
+    expect(parsed.searchParams.get("from")).toBe("2026-03-01T00:00:00Z");
+  });
+
+  it("encodes all query params", async () => {
+    let capturedURL = "";
+    const mockFetch = async (url: string | URL | Request) => {
+      capturedURL = String(url);
+      return jsonResponse([]);
+    };
+
+    const client = new Client("http://localhost:8089", {
+      fetch: mockFetch as typeof fetch,
+    });
+    await client.history({
+      from: "2026-03-01T00:00:00Z",
+      to: "2026-03-02T00:00:00Z",
+      pgn: [129025, 129026],
+      src: [1, 2],
+      limit: 500,
+      interval: "1s",
+      decode: true,
+    });
+    const parsed = new URL(capturedURL);
+    expect(parsed.searchParams.get("from")).toBe("2026-03-01T00:00:00Z");
+    expect(parsed.searchParams.get("to")).toBe("2026-03-02T00:00:00Z");
+    expect(parsed.searchParams.getAll("pgn")).toEqual(["129025", "129026"]);
+    expect(parsed.searchParams.getAll("src")).toEqual(["1", "2"]);
+    expect(parsed.searchParams.get("limit")).toBe("500");
+    expect(parsed.searchParams.get("interval")).toBe("1s");
+    expect(parsed.searchParams.get("decode")).toBe("true");
+  });
+
+  it("throws HttpError on 503", async () => {
+    const mockFetch = async () => errorResponse(503, "journaling not enabled");
+    const client = new Client("http://localhost:8089", {
+      fetch: mockFetch as typeof fetch,
+    });
+    await expect(
+      client.history({ from: "2026-03-01T00:00:00Z" }),
+    ).rejects.toThrow(HttpError);
+  });
+});
+
+describe("Client.liveness", () => {
+  it("returns liveness status", async () => {
+    const mockFetch = async (url: string | URL | Request) => {
+      expect(url).toBe("http://localhost:8089/livez");
+      return jsonResponse({ status: "ok" });
+    };
+
+    const client = new Client("http://localhost:8089", {
+      fetch: mockFetch as typeof fetch,
+    });
+    const result = await client.liveness();
+    expect(result.status).toBe("ok");
+  });
+});
+
+describe("Client.readiness", () => {
+  it("returns readiness status", async () => {
+    const mockFetch = async (url: string | URL | Request) => {
+      expect(url).toBe("http://localhost:8089/readyz");
+      return jsonResponse({ status: "ok" });
+    };
+
+    const client = new Client("http://localhost:8089", {
+      fetch: mockFetch as typeof fetch,
+    });
+    const result = await client.readiness();
+    expect(result.status).toBe("ok");
+  });
+
+  it("throws HttpError when not ready", async () => {
+    const mockFetch = async () => errorResponse(503, "not ready");
+    const client = new Client("http://localhost:8089", {
+      fetch: mockFetch as typeof fetch,
+    });
+    await expect(client.readiness()).rejects.toThrow(HttpError);
+  });
+});
+
+describe("Filter with bus", () => {
+  it("encodes bus filter in query params", async () => {
+    let capturedURL = "";
+    const mockFetch = async (url: string | URL | Request) => {
+      capturedURL = String(url);
+      return jsonResponse([]);
+    };
+
+    const client = new Client("http://localhost:8089", {
+      fetch: mockFetch as typeof fetch,
+    });
+    await client.values({ bus: ["can0", "can1"] });
+    const parsed = new URL(capturedURL);
+    expect(parsed.searchParams.getAll("bus")).toEqual(["can0", "can1"]);
+  });
+
+  it("includes bus in session filter body", async () => {
+    let capturedBody = "";
+    const mockFetch = async (
+      _url: string | URL | Request,
+      init?: RequestInit,
+    ) => {
+      if (init?.method === "PUT") {
+        capturedBody = init.body as string;
+        return jsonResponse({
+          client_id: "bus-test",
+          seq: 1,
+          cursor: 0,
+          devices: [],
+        });
+      }
+      return errorResponse(404, "not found");
+    };
+
+    const client = new Client("http://localhost:8089", {
+      fetch: mockFetch as typeof fetch,
+    });
+    await client.createSession({
+      clientId: "bus-test",
+      bufferTimeout: "PT1M",
+      filter: { bus: ["can0"] },
+    });
+
+    const body = JSON.parse(capturedBody);
+    expect(body.filter.bus).toEqual(["can0"]);
+  });
+});
+
 describe("Filter exclusions", () => {
   it("encodes exclude_pgn in query params", async () => {
     let capturedURL = "";

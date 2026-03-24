@@ -143,6 +143,21 @@ describe("parseSSE", () => {
     expect(events).toHaveLength(0);
   });
 
+  it("parses a device_removed event", async () => {
+    const removed = { type: "device_removed", bus: "can0", src: 5 };
+    const stream = makeStream(`data: ${JSON.stringify(removed)}\n\n`);
+    const events = [];
+    for await (const event of parseSSE(stream)) {
+      events.push(event);
+    }
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe("device_removed");
+    if (events[0].type === "device_removed") {
+      expect(events[0].deviceRemoved.src).toBe(5);
+      expect(events[0].deviceRemoved.bus).toBe("can0");
+    }
+  });
+
   it("skips JSON that is not an object", async () => {
     const text = `data: 42\ndata: "hello"\ndata: [1,2,3]\ndata: null\ndata: ${JSON.stringify(sampleFrame)}\n\n`;
     const stream = makeStream(text);

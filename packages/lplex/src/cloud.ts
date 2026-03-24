@@ -1,6 +1,7 @@
 import { Client, type ClientOptions } from "./client.js";
 import { HttpError } from "./errors.js";
 import type {
+  HealthStatus,
   InstanceStatus,
   InstanceSummary,
   ReplicationEvent,
@@ -87,5 +88,44 @@ export class CloudClient {
     }
 
     return resp.json() as Promise<ReplicationEvent[]>;
+  }
+
+  /** Check cloud server health (GET /healthz). */
+  async health(signal?: AbortSignal): Promise<HealthStatus> {
+    const url = `${this.#baseURL}/healthz`;
+    const resp = await this.#fetch(url, { signal });
+
+    if (!resp.ok) {
+      const body = await resp.text();
+      throw new HttpError("GET", url, resp.status, body);
+    }
+
+    return resp.json() as Promise<HealthStatus>;
+  }
+
+  /** Liveness probe (GET /livez). */
+  async liveness(signal?: AbortSignal): Promise<HealthStatus> {
+    const url = `${this.#baseURL}/livez`;
+    const resp = await this.#fetch(url, { signal });
+
+    if (!resp.ok) {
+      const body = await resp.text();
+      throw new HttpError("GET", url, resp.status, body);
+    }
+
+    return resp.json() as Promise<HealthStatus>;
+  }
+
+  /** Readiness probe (GET /readyz). */
+  async readiness(signal?: AbortSignal): Promise<HealthStatus> {
+    const url = `${this.#baseURL}/readyz`;
+    const resp = await this.#fetch(url, { signal });
+
+    if (!resp.ok) {
+      const body = await resp.text();
+      throw new HttpError("GET", url, resp.status, body);
+    }
+
+    return resp.json() as Promise<HealthStatus>;
   }
 }
