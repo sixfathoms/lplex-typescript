@@ -145,6 +145,66 @@ describe("CloudClient.replicationEvents", () => {
   });
 });
 
+describe("CloudClient.health", () => {
+  it("fetches cloud health status", async () => {
+    const payload = {
+      status: "ok",
+      instances_total: 10,
+      instances_connected: 8,
+    };
+    const mockFetch = async (url: string | URL | Request) => {
+      expect(url).toBe("https://cloud.example.com/healthz");
+      return jsonResponse(payload);
+    };
+
+    const client = new CloudClient("https://cloud.example.com", {
+      fetch: mockFetch as typeof fetch,
+    });
+    const result = await client.health();
+    expect(result.status).toBe("ok");
+    expect(result.instances_total).toBe(10);
+    expect(result.instances_connected).toBe(8);
+  });
+});
+
+describe("CloudClient.liveness", () => {
+  it("fetches liveness", async () => {
+    const mockFetch = async (url: string | URL | Request) => {
+      expect(url).toBe("https://cloud.example.com/livez");
+      return jsonResponse({ status: "ok" });
+    };
+
+    const client = new CloudClient("https://cloud.example.com", {
+      fetch: mockFetch as typeof fetch,
+    });
+    const result = await client.liveness();
+    expect(result.status).toBe("ok");
+  });
+});
+
+describe("CloudClient.readiness", () => {
+  it("fetches readiness", async () => {
+    const mockFetch = async (url: string | URL | Request) => {
+      expect(url).toBe("https://cloud.example.com/readyz");
+      return jsonResponse({ status: "ok" });
+    };
+
+    const client = new CloudClient("https://cloud.example.com", {
+      fetch: mockFetch as typeof fetch,
+    });
+    const result = await client.readiness();
+    expect(result.status).toBe("ok");
+  });
+
+  it("throws HttpError when not ready", async () => {
+    const mockFetch = async () => errorResponse(503, "not ready");
+    const client = new CloudClient("https://cloud.example.com", {
+      fetch: mockFetch as typeof fetch,
+    });
+    await expect(client.readiness()).rejects.toThrow(HttpError);
+  });
+});
+
 describe("CloudClient.client", () => {
   it("returns a Client scoped to the instance", async () => {
     const devices = [{ src: 1, manufacturer: "Garmin" }];

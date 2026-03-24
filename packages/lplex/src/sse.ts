@@ -1,4 +1,4 @@
-import type { Device, Event, Frame } from "./types.js";
+import type { Device, DeviceRemoved, Event, Frame } from "./types.js";
 
 /**
  * Parse an SSE stream from a fetch Response into an async iterable of Events.
@@ -67,8 +67,16 @@ export async function* parseSSE(
 }
 
 function classify(obj: Record<string, unknown>): Event | null {
-  if ("type" in obj && obj.type === "device") {
-    return { type: "device", device: obj as unknown as Device };
+  if ("type" in obj) {
+    if (obj.type === "device") {
+      return { type: "device", device: obj as unknown as Device };
+    }
+    if (obj.type === "device_removed") {
+      return {
+        type: "device_removed",
+        deviceRemoved: obj as unknown as DeviceRemoved,
+      };
+    }
   }
   if ("seq" in obj) {
     return { type: "frame", frame: obj as unknown as Frame };
